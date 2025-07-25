@@ -1,0 +1,2 @@
+# This file ensures the minio volume directory is tracked in git
+# The actual MinIO data files will be ignored via .gitignore

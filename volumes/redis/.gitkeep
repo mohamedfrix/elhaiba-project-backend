@@ -1,0 +1,2 @@
+# This file ensures the redis volume directory is tracked in git
+# The actual Redis data files will be ignored via .gitignore

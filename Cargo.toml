@@ -1,0 +1,61 @@
+[package]
+name = "elhaiba-backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.8", features = ["multipart"] }
+async-trait = "0.1"
+tokio = { version = "1.42", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "uuid", "chrono", "macros"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0"
+serde_json = "1.0"
+jsonwebtoken = "9.3"
+dotenv = "0.15"
+tokio-retry = "0.3"
+tokio-util = { version = "0.7", features = ["time"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["serde", "v4"] }
+rand = { version = "0.8", features = ["std"] }
+password-hash = { version = "0.5", features = ["rand_core"] }
+argon2 = "0.5"
+thiserror = "2.0"
+minio = "0.1"
+bytes = "1.0"
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+lettre = { version = "0.11", features = ["tokio1-native-tls", "smtp-transport", "builder"] }
+html-escape = "0.2"
+
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors"] }
+time = { version = "0.3.41", features = ["serde"] }
+
+[dev-dependencies]
+# Testing utilities
+tokio-test = "0.4"
+# For test logging
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[[bench]]
+name = "jwt_benchmarks"
+
+[[bench]]
+name = "password_benchmarks"
+
+[[bench]]
+name = "jwt_memory_benchmarks"
+
+[[bench]]
+name = "password_memory_benchmarks"
+
+[[bin]]
+name = "send_email_example"
+path = "examples/email/send_email.rs"
+
+[[bin]]
+name = "generate_token_example"
+path = "examples/jwt/generate_token.rs"

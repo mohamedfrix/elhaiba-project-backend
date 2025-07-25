@@ -1,0 +1,357 @@
+# =============================================================================
+# ELHAIBA BACKEND - DOCKER COMPOSE CONFIGURATION
+# =============================================================================
+# This docker-compose.yml file provides all the infrastructure services
+# required for running and testing the Elhaiba backend application.
+#
+# Services included:
+# - MinIO: Object storage service
+# - Redis: Cache and session storage service
+# - Redis Commander: Web UI for Redis management
+# - MinIO Console: Already included in MinIO service
+#
+# Usage:
+#   docker-compose up -d                    # Start all services
+#   docker-compose down                     # Stop all services
+#   docker-compose logs [service_name]      # View logs
+#   docker-compose ps                       # Show running services
+# =============================================================================
+
+# =============================================================================
+# NETWORK CONFIGURATION
+# =============================================================================
+networks:
+  elhaiba-network:
+    driver: bridge
+    name: ${NETWORK_NAME:-elhaiba-network}
+
+# =============================================================================
+# VOLUME CONFIGURATION
+# =============================================================================
+# Using bind mounts to local project directories instead of Docker volumes
+# This allows for easier data management and backup within the project structure
+# volumes:
+#   - No Docker volumes needed, using bind mounts to ./volumes/ directory
+
+# =============================================================================
+# SERVICES CONFIGURATION
+# =============================================================================
+services:
+  # ===========================================================================
+  # MINIO SERVICE - Object Storage
+  # ===========================================================================
+  minio:
+    image: minio/minio:latest
+    container_name: ${MINIO_CONTAINER_NAME:-elhaiba-minio}
+    hostname: minio
+    restart: unless-stopped
+    
+    # Environment Configuration
+    environment:
+      # MinIO root credentials
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+      
+      # MinIO configuration
+      MINIO_REGION: ${MINIO_REGION:-us-east-1}
+      MINIO_BROWSER: "on"
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+      
+      # Health check configuration
+      MINIO_HEALTH_CHECK_INTERVAL: 30s
+      
+      # Console configuration
+      MINIO_CONSOLE_ADDRESS: ":9001"
+      
+    # Port Configuration
+    ports:
+      - "9000:9000"   # MinIO API
+      - "9001:9001"   # MinIO Console (Web UI)
+    
+    # Volume Configuration - using bind mount to local project directory
+    volumes:
+      - ./volumes/minio:/data
+    
+    # Startup Command
+    command: server /data --console-address ":9001"
+    
+    # Health Check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 60s
+    
+    # Network Configuration
+    networks:
+      - elhaiba-network
+    
+    # Labels for organization
+    labels:
+      - "traefik.enable=false"
+      - "project=elhaiba-backend"
+      - "service=minio"
+      - "environment=${ENVIRONMENT:-development}"
+
+  # ===========================================================================
+  # REDIS SERVICE - Cache and Session Storage
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: ${REDIS_CONTAINER_NAME:-elhaiba-redis}
+    hostname: redis
+    restart: unless-stopped
+    
+    # Environment Configuration for Authentication
+    environment:
+      - REDIS_USERNAME=${REDIS_USERNAME:-frix}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-07vk640xz}
+    
+    # Port Configuration
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    
+    # Volume Configuration - using bind mounts to local project directories
+    volumes:
+      - ./volumes/redis:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    
+    # Startup Command with Configuration and Authentication
+    command: >
+      sh -c '
+      echo "user default off" > /tmp/users.acl &&
+      echo "user ${REDIS_USERNAME:-frix} on >${REDIS_PASSWORD:-07vk640xz} ~* &* +@all" >> /tmp/users.acl &&
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --tcp-keepalive 300
+      --timeout 0
+      --databases 16
+      --logfile ""
+      --loglevel notice
+      --aclfile /tmp/users.acl
+      --requirepass ${REDIS_PASSWORD:-07vk640xz}
+      '
+    
+    # Health Check with Authentication
+    healthcheck:
+      test: ["CMD", "redis-cli", "--user", "${REDIS_USERNAME:-frix}", "--pass", "${REDIS_PASSWORD:-07vk640xz}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    # Network Configuration
+    networks:
+      - elhaiba-network
+    
+    # Resource Limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    
+    # Labels for organization
+    labels:
+      - "traefik.enable=false"
+      - "project=elhaiba-backend"
+      - "service=redis"
+      - "environment=${ENVIRONMENT:-development}"
+
+  # ===========================================================================
+  # REDIS COMMANDER - Redis Web UI (Optional)
+  # ===========================================================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: elhaiba-redis-commander
+    hostname: redis-commander
+    restart: unless-stopped
+    
+    # Environment Configuration
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:${REDIS_USERNAME:-frix}:${REDIS_PASSWORD:-07vk640xz}
+      - HTTP_USER=admin
+      - HTTP_PASSWORD=admin
+      - PORT=8081
+    
+    # Port Configuration
+    ports:
+      - "8081:8081"
+    
+    # Network Configuration
+    networks:
+      - elhaiba-network
+    
+    # Service Dependencies
+    depends_on:
+      redis:
+        condition: service_healthy
+    
+    # Health Check
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8081"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    # Labels for organization
+    labels:
+      - "traefik.enable=false"
+      - "project=elhaiba-backend"
+      - "service=redis-commander"
+      - "environment=${ENVIRONMENT:-development}"
+
+  # ===========================================================================
+  # MAILHOG SERVICE - Email Testing (Development Only)
+  # ===========================================================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: elhaiba-mailhog
+    hostname: mailhog
+    restart: unless-stopped
+    
+    # Port Configuration
+    ports:
+      - "1025:1025"   # SMTP Server
+      - "8025:8025"   # Web UI
+    
+    # Network Configuration
+    networks:
+      - elhaiba-network
+    
+    # Environment Configuration
+    environment:
+      - MH_HOSTNAME=mailhog
+      - MH_STORAGE=memory
+      - MH_UI_WEB_PATH=mailhog
+    
+    # Health Check
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8025"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Labels for organization
+    labels:
+      - "traefik.enable=false"
+      - "project=elhaiba-backend"
+      - "service=mailhog"
+      - "environment=${ENVIRONMENT:-development}"
+
+  # ===========================================================================
+  # MINIO CLIENT - For initial setup and bucket creation
+  # ===========================================================================
+  minio-setup:
+    image: minio/mc:latest
+    container_name: elhaiba-minio-setup
+    hostname: minio-setup
+    
+    # Environment Configuration
+    environment:
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME:-elhaiba-bucket}
+      - TEST_BUCKET_NAME=${TEST_MINIO_BUCKET_NAME:-test-bucket}
+    
+    # Network Configuration
+    networks:
+      - elhaiba-network
+    
+    # Service Dependencies
+    depends_on:
+      minio:
+        condition: service_healthy
+    
+    # Setup Commands
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Waiting for MinIO to be ready...';
+      sleep 10;
+      echo 'Configuring MinIO client...';
+      mc alias set minio http://minio:9000 $$MINIO_ACCESS_KEY $$MINIO_SECRET_KEY;
+      echo 'Creating main bucket...';
+      mc mb minio/$$MINIO_BUCKET_NAME --ignore-existing;
+      echo 'Creating test bucket...';
+      mc mb minio/$$TEST_BUCKET_NAME --ignore-existing;
+      echo 'Setting bucket policies...';
+      mc anonymous set public minio/$$MINIO_BUCKET_NAME;
+      mc anonymous set public minio/$$TEST_BUCKET_NAME;
+      echo 'Creating sample directories...';
+      mc cp /dev/null minio/$$MINIO_BUCKET_NAME/uploads/.keep;
+      mc cp /dev/null minio/$$MINIO_BUCKET_NAME/images/.keep;
+      mc cp /dev/null minio/$$MINIO_BUCKET_NAME/documents/.keep;
+      mc cp /dev/null minio/$$TEST_BUCKET_NAME/test/.keep;
+      echo 'MinIO setup completed successfully!';
+      "
+    
+    # Restart policy - only run once
+    restart: "no"
+    
+    # Labels for organization
+    labels:
+      - "project=elhaiba-backend"
+      - "service=minio-setup"
+      - "environment=${ENVIRONMENT:-development}"
+
+# =============================================================================
+# SERVICE ACCESS INFORMATION
+# =============================================================================
+# After starting the services with `docker-compose up -d`, you can access:
+#
+# MinIO API:              http://localhost:9000
+# MinIO Console:          http://localhost:9001 (admin/admin)
+# Redis:                  localhost:6379
+# Redis Commander:        http://localhost:8081 (admin/admin)
+# MailHog SMTP:           localhost:1025 (for application)
+# MailHog Web UI:         http://localhost:8025 (for viewing emails)
+#
+# Default Credentials:
+# - MinIO: minioadmin / minioadmin
+# - Redis Commander: admin / admin
+# - MailHog: No authentication required
+#
+# =============================================================================
+
+# =============================================================================
+# DEVELOPMENT COMMANDS
+# =============================================================================
+# Common commands for development:
+#
+# Start all services:
+#   docker-compose up -d
+#
+# View logs:
+#   docker-compose logs -f
+#   docker-compose logs -f minio
+#   docker-compose logs -f redis
+#
+# Stop all services:
+#   docker-compose down
+#
+# Reset all data (WARNING: This will delete all data):
+#   docker-compose down -v
+#
+# Restart a specific service:
+#   docker-compose restart minio
+#   docker-compose restart redis
+#
+# Access service shells:
+#   docker-compose exec minio sh
+#   docker-compose exec redis redis-cli
+#
+# Check service health:
+#   docker-compose ps
+#
+# =============================================================================

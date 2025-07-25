@@ -1,0 +1,89 @@
+
+running 6 tests
+╔═══════════════════════════════════════════════════╗
+║          Memory Analysis: complete_validation_flow ║
+╠═══════════════════════════════════════════════════╣
+║ Samples analyzed:                        510,301 ║
+║ Average allocated:                       1,499 bytes ║
+║ Average peak:                              812 bytes ║
+║ Max allocated:                           1,499 bytes ║
+║ Min allocated:                           1,499 bytes ║
+║ Max peak:                                  812 bytes ║
+║ Memory efficiency:                    1.846059 ║
+║ Standard deviation:                          0 bytes ║
+║ Memory consistency:                 Excellent ║
+╚═══════════════════════════════════════════════════╝
+test bench_memory_complete_validation_flow ... bench:      10,514.15 ns/iter (+/- 12,129.47)
+╔═══════════════════════════════════════════════════╗
+║          Memory Analysis: generate_access_token ║
+╠═══════════════════════════════════════════════════╣
+║ Samples analyzed:                       1,134,001 ║
+║ Average allocated:                       1,502 bytes ║
+║ Average peak:                              742 bytes ║
+║ Max allocated:                           1,502 bytes ║
+║ Min allocated:                           1,502 bytes ║
+║ Max peak:                                  742 bytes ║
+║ Memory efficiency:                    2.024259 ║
+║ Standard deviation:                          0 bytes ║
+║ Memory consistency:                 Excellent ║
+╚═══════════════════════════════════════════════════╝
+test bench_memory_generate_access_token    ... bench:       4,105.81 ns/iter (+/- 817.52)
+╔═══════════════════════════════════════════════════╗
+║          Memory Analysis: generate_refresh_token ║
+╠═══════════════════════════════════════════════════╣
+║ Samples analyzed:                        274,501 ║
+║ Average allocated:                       1,509 bytes ║
+║ Average peak:                              747 bytes ║
+║ Max allocated:                           1,509 bytes ║
+║ Min allocated:                           1,509 bytes ║
+║ Max peak:                                  747 bytes ║
+║ Memory efficiency:                    2.020080 ║
+║ Standard deviation:                          0 bytes ║
+║ Memory consistency:                 Excellent ║
+╚═══════════════════════════════════════════════════╝
+test bench_memory_generate_refresh_token   ... bench:       4,105.73 ns/iter (+/- 491.23)
+╔═══════════════════════════════════════════════════╗
+║          Memory Analysis: generate_token_pair ║
+╠═══════════════════════════════════════════════════╣
+║ Samples analyzed:                         49,501 ║
+║ Average allocated:                       3,017 bytes ║
+║ Average peak:                            1,040 bytes ║
+║ Max allocated:                           3,017 bytes ║
+║ Min allocated:                           3,017 bytes ║
+║ Max peak:                                1,040 bytes ║
+║ Memory efficiency:                    2.900962 ║
+║ Standard deviation:                          0 bytes ║
+║ Memory consistency:                 Excellent ║
+╚═══════════════════════════════════════════════════╝
+test bench_memory_generate_token_pair      ... bench:       8,123.66 ns/iter (+/- 943.59)
+╔═══════════════════════════════════════════════════╗
+║          Memory Analysis: token_serialization ║
+╠═══════════════════════════════════════════════════╣
+║ Samples analyzed:                       1,757,701 ║
+║ Average allocated:                       2,892 bytes ║
+║ Average peak:                            1,860 bytes ║
+║ Max allocated:                           2,892 bytes ║
+║ Min allocated:                           2,892 bytes ║
+║ Max peak:                                1,860 bytes ║
+║ Memory efficiency:                    1.554839 ║
+║ Standard deviation:                          0 bytes ║
+║ Memory consistency:                 Excellent ║
+╚═══════════════════════════════════════════════════╝
+test bench_memory_token_serialization      ... bench:       1,106.59 ns/iter (+/- 457.31)
+╔═══════════════════════════════════════════════════╗
+║          Memory Analysis: validate_access_token ║
+╠═══════════════════════════════════════════════════╣
+║ Samples analyzed:                        381,301 ║
+║ Average allocated:                         598 bytes ║
+║ Average peak:                              443 bytes ║
+║ Max allocated:                             598 bytes ║
+║ Min allocated:                             598 bytes ║
+║ Max peak:                                  443 bytes ║
+║ Memory efficiency:                    1.349887 ║
+║ Standard deviation:                          0 bytes ║
+║ Memory consistency:                 Excellent ║
+╚═══════════════════════════════════════════════════╝
+test bench_memory_validate_access_token    ... bench:       4,424.59 ns/iter (+/- 1,696.65)
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 6 measured; 0 filtered out; finished in 16.40s
+

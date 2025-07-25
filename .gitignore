@@ -1,0 +1,32 @@
+# Build artifacts
+/target
+
+# Volume data - keep directory structure but ignore data files
+/volumes/minio/*
+!/volumes/minio/.gitkeep
+/volumes/redis/*
+!/volumes/redis/.gitkeep
+
+# Environment files with sensitive data
+.env.local
+.env.production
+.env.staging
+
+# IDE files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/

@@ -1,0 +1,17 @@
+
+running 12 tests
+test bench_check_role_permission            ... bench:           2.22 ns/iter (+/- 0.46)
+test bench_complete_token_validation_flow   ... bench:       7,656.44 ns/iter (+/- 7,703.78)
+test bench_concurrent_token_validation      ... bench:       3,725.42 ns/iter (+/- 2,530.75)
+test bench_extract_token_from_header        ... bench:          90.62 ns/iter (+/- 29.62)
+test bench_generate_access_token            ... bench:       3,707.32 ns/iter (+/- 387.17)
+test bench_generate_refresh_token           ... bench:       3,726.87 ns/iter (+/- 1,553.47)
+test bench_generate_token_pair              ... bench:       7,492.54 ns/iter (+/- 3,915.98)
+test bench_get_user_id_from_token           ... bench:       3,854.19 ns/iter (+/- 425.35)
+test bench_token_generation_different_roles ... bench:       3,752.32 ns/iter (+/- 839.16)
+test bench_token_serialization              ... bench:       1,106.00 ns/iter (+/- 306.33)
+test bench_validate_access_token            ... bench:       3,794.25 ns/iter (+/- 2,565.58)
+test bench_validate_refresh_token           ... bench:       3,806.28 ns/iter (+/- 1,307.68)
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 12 measured; 0 filtered out; finished in 12.64s
+
