@@ -1,0 +1,128 @@
+# Production Docker Compose for Elhaiba Backend
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      # Database
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongo:27017}
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-elhaiba}
+      - MONGODB_USERNAME=${MONGODB_USERNAME:-elhaiba}
+      - MONGODB_PASSWORD=${MONGODB_PASSWORD:-password}
+      - MONGODB_QUOTE_COLLECTION=${MONGODB_QUOTE_COLLECTION:-quotes}
+      
+      # Redis
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_USERNAME=${REDIS_USERNAME:-}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_DATABASE=${REDIS_DATABASE:-0}
+      
+      # JWT
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ACCESS_TOKEN_EXPIRATION=${JWT_ACCESS_TOKEN_EXPIRATION:-15}
+      - JWT_REFRESH_TOKEN_EXPIRATION=${JWT_REFRESH_TOKEN_EXPIRATION:-10080}
+      - JWT_ISSUER=${JWT_ISSUER:-elhaiba-backend}
+      - JWT_AUDIENCE=${JWT_AUDIENCE:-elhaiba-backend-users}
+      
+      # MinIO
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio:9000}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME:-elhaiba-bucket}
+      - MINIO_REGION=${MINIO_REGION:-us-east-1}
+      - MINIO_SECURE=${MINIO_SECURE:-false}
+      
+      # Email
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - FROM_NAME=${FROM_NAME:-Elhaiba}
+      
+      # App config
+      - APP_HOST=${APP_HOST:-0.0.0.0}
+      - APP_PORT=${APP_PORT:-4000}
+      
+      # Admin user
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_FIRST_NAME=${ADMIN_FIRST_NAME:-Admin}
+      - ADMIN_LAST_NAME=${ADMIN_LAST_NAME:-User}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@elhaiba.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      
+      # Password reset
+      - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:3000}
+      - RESET_PASSWORD_PATH=${RESET_PASSWORD_PATH:-/reset-password}
+      - RESET_TOKEN_EXPIRATION=${RESET_TOKEN_EXPIRATION:-3600}
+      
+      # Logging
+      - RUST_LOG=${RUST_LOG:-info}
+      - RUST_BACKTRACE=${RUST_BACKTRACE:-1}
+    
+    depends_on:
+      - mongo
+      - redis
+      - minio
+    
+    volumes:
+      - ./logs:/app/logs
+    
+    restart: unless-stopped
+    
+    networks:
+      - elhaiba-network
+
+  mongo:
+    image: mongo:7.0
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USERNAME:-elhaiba}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD:-password}
+      - MONGO_INITDB_DATABASE=${MONGODB_DATABASE:-elhaiba}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+    networks:
+      - elhaiba-network
+
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - elhaiba-network
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+    networks:
+      - elhaiba-network
+
+volumes:
+  mongo_data:
+  redis_data:
+  minio_data:
+
+networks:
+  elhaiba-network:
+    driver: bridge

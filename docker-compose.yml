@@ -38,6 +38,41 @@ networks:
 # =============================================================================
 services:
   # ===========================================================================
+  # MONGODB SERVICE - Database
+  # ===========================================================================
+  mongodb:
+    image: mongo:6.0
+    container_name: elhaiba-mongodb
+    hostname: mongodb
+    restart: unless-stopped
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: frix
+      MONGO_INITDB_ROOT_PASSWORD: 07vk640xz
+      MONGO_INITDB_DATABASE: elhaiba
+
+    ports:
+      - "6000:27017"
+
+    volumes:
+      - ./volumes/mongodb:/data/db
+
+    networks:
+      - elhaiba-network
+
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    labels:
+      - "traefik.enable=false"
+      - "project=elhaiba-backend"
+      - "service=mongodb"
+      - "environment=${ENVIRONMENT:-development}"
+  # ===========================================================================
   # MINIO SERVICE - Object Storage
   # ===========================================================================
   minio:
@@ -213,41 +248,41 @@ services:
   # ===========================================================================
   # MAILHOG SERVICE - Email Testing (Development Only)
   # ===========================================================================
-  mailhog:
-    image: mailhog/mailhog:latest
-    container_name: elhaiba-mailhog
-    hostname: mailhog
-    restart: unless-stopped
+  # mailhog:
+  #   image: mailhog/mailhog:latest
+  #   container_name: elhaiba-mailhog
+  #   hostname: mailhog
+  #   restart: unless-stopped
     
-    # Port Configuration
-    ports:
-      - "1025:1025"   # SMTP Server
-      - "8025:8025"   # Web UI
+  #   # Port Configuration
+  #   ports:
+  #     - "1025:1025"   # SMTP Server
+  #     - "8025:8025"   # Web UI
     
-    # Network Configuration
-    networks:
-      - elhaiba-network
+  #   # Network Configuration
+  #   networks:
+  #     - elhaiba-network
     
-    # Environment Configuration
-    environment:
-      - MH_HOSTNAME=mailhog
-      - MH_STORAGE=memory
-      - MH_UI_WEB_PATH=mailhog
+  #   # Environment Configuration
+  #   environment:
+  #     - MH_HOSTNAME=mailhog
+  #     - MH_STORAGE=memory
+  #     - MH_UI_WEB_PATH=mailhog
     
-    # Health Check
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8025"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+  #   # Health Check
+  #   healthcheck:
+  #     test: ["CMD", "wget", "-q", "--spider", "http://localhost:8025"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 10s
     
-    # Labels for organization
-    labels:
-      - "traefik.enable=false"
-      - "project=elhaiba-backend"
-      - "service=mailhog"
-      - "environment=${ENVIRONMENT:-development}"
+  #   # Labels for organization
+  #   labels:
+  #     - "traefik.enable=false"
+  #     - "project=elhaiba-backend"
+  #     - "service=mailhog"
+  #     - "environment=${ENVIRONMENT:-development}"
 
   # ===========================================================================
   # MINIO CLIENT - For initial setup and bucket creation

@@ -1,7 +1,7 @@
 [package]
 name = "elhaiba-backend"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 axum = { version = "0.8", features = ["multipart"] }
@@ -50,18 +50,6 @@ tokio-test = "0.4"
 # For test logging
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 http-body-util = "0.1"
-
-[[bench]]
-name = "jwt_benchmarks"
-
-[[bench]]
-name = "password_benchmarks"
-
-[[bench]]
-name = "jwt_memory_benchmarks"
-
-[[bench]]
-name = "password_memory_benchmarks"
 
 [[bin]]
 name = "server"

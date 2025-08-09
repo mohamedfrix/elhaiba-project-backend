@@ -13,7 +13,7 @@ use tracing::{debug, error, info, instrument, warn};
 #[derive(Debug, Clone)]
 pub struct MinioService {
     client: Client,
-    config: MinioConfig,
+    pub config: MinioConfig,
 }
 
 impl MinioService {
@@ -100,38 +100,51 @@ impl MinioService {
     pub async fn put_object(
         &self,
         object_name: &str,
-        data: Bytes,
+        data: Vec<u8>,
         content_type: Option<&str>,
     ) -> Result<(), MinioError> {
         info!("Uploading object '{}' to bucket '{}'", object_name, self.config.bucket_name);
         debug!("Object size: {} bytes", data.len());
 
-        let mut reader = Cursor::new(data.clone());
-        let data_len = data.len();
+        // Clone what is needed for the blocking task
+        let bucket_name = self.config.bucket_name.clone();
+        let object_name_owned = object_name.to_string();
+        let client = self.client.clone();
+        let content_type_owned = content_type.map(|ct| ct.to_string());
 
-        let mut args = PutObjectArgs::new(
-            &self.config.bucket_name, 
-            object_name, 
-            &mut reader,
-            Some(data_len),
-            None,
-        ).map_err(|e| {
-            error!("Failed to create put object args: {}", e);
-            MinioError::InvalidArguments(e.to_string())
-        })?;
+        tokio::task::spawn_blocking(move || {
+            let mut reader = Cursor::new(data);
+            let data_len = reader.get_ref().len();
 
-        if let Some(ct) = content_type {
-            debug!("Setting content type: {}", ct);
-            args.content_type = ct;
-        }
+            // Keep the content_type String alive for the duration of args
+            let ct_holder = content_type_owned;
 
-        self.client.put_object(&mut args).await
-            .map_err(|e| {
-                error!("Failed to upload object '{}': {}", object_name, e);
-                MinioError::OperationError(format!("Upload failed: {}", e))
+            let mut args = PutObjectArgs::new(
+                &bucket_name,
+                &object_name_owned,
+                &mut reader,
+                Some(data_len),
+                None,
+            ).map_err(|e| {
+                MinioError::InvalidArguments(e.to_string())
             })?;
 
-        info!("Successfully uploaded object '{}'", object_name);
+            if let Some(ref ct) = ct_holder {
+                args.content_type = ct;
+            }
+
+            // This is a blocking call
+            futures::executor::block_on(client.put_object(&mut args))
+                .map_err(|e| MinioError::OperationError(format!("Upload failed: {}", e)))?;
+
+            info!("Successfully uploaded object '{}'", &object_name_owned);
+            Ok(())
+        })
+        .await
+        .map_err(|e| {
+            error!("Failed to join blocking task for put_object: {}", e);
+            MinioError::OperationError(format!("Join error: {}", e))
+        })??;
         Ok(())
     }
 
@@ -256,14 +269,20 @@ impl MinioService {
             "Generating presigned URL for object '{}' with expiry {} seconds",
             object_name, expires_in_secs
         );
-
-        // Note: This is a placeholder implementation
-        // The actual MinIO Rust client might have different methods for presigned URLs
         warn!("Presigned URL generation is not yet implemented in this version");
-        
         Err(MinioError::OperationError(
             "Presigned URL generation not implemented".to_string(),
         ))
+    }
+
+    /// Generate a public download link for an object (not secure, just a direct link)
+    pub fn generate_download_link(&self, base_url: &str, bucket_name: &str, object_name: &str) -> String {
+        format!(
+            "{}/{}/{}",
+            base_url.trim_end_matches('/'),
+            bucket_name,
+            object_name
+        )
     }
 }
 

@@ -3,6 +3,10 @@ pub mod redis_conf;
 pub mod jwt_conf;
 pub mod email_conf;
 pub mod password_reset_conf;
+pub mod mongo_conf;
+pub mod admin_user_conf;
+pub mod app_conf;
+
 
 pub use minio_conf::MinioConfig;
 pub use redis_conf::RedisConfig;

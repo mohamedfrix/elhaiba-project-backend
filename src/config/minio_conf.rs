@@ -8,6 +8,7 @@ pub struct MinioConfig {
     pub access_key: String,
     pub secret_key: String,
     pub bucket_name: String,
+    pub links_prefix: String,
     pub region: Option<String>,
     pub secure: bool,
 }
@@ -71,11 +72,19 @@ impl MinioConfig {
             });
         debug!("MinIO secure connection: {}", secure);
 
+        let links_prefix = env::var("MINIO_LINKS_PREFIX")
+            .unwrap_or_else(|_| {
+                warn!("MINIO_LINKS_PREFIX not set, using default: /");
+                "127.0.0.1:9000/".to_string()
+            });
+        debug!("MinIO links prefix: {}", links_prefix);
+
         let config = Self {
             endpoint,
             access_key,
             secret_key,
             bucket_name,
+            links_prefix,
             region,
             secure,
         };
@@ -144,6 +153,7 @@ impl Default for MinioConfig {
             access_key: "minioadmin".to_string(),
             secret_key: "minioadmin".to_string(),
             bucket_name: "default-bucket".to_string(),
+            links_prefix: "127.0.0.1:9000/".to_string(),
             region: Some("us-east-1".to_string()),
             secure: false,
         }

@@ -1,0 +1,56 @@
+# Dockerfile
+Dockerfile
+
+# Target directory (build artifacts)
+target/
+
+# Logs
+logs/
+*.log
+
+# Environment files (should be provided at runtime)
+.env
+.env.*
+
+# Git
+.git
+.gitignore
+
+# Documentation and development files
+*.md
+README.md
+API_ROUTES.md
+PROJECT_STATUS.md
+RUST_BENCHMARKING_GUIDE.md
+RUST_TESTING_GUIDE.md
+
+# Development scripts
+setup-dev.sh
+manage-volumes.sh
+
+# Docker compose (for development)
+docker-compose.yml
+docker/
+
+# Benchmark results
+bench_results/
+
+# Test files
+tests/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# Volumes (for development)
+volumes/

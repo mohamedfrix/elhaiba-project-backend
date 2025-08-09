@@ -235,7 +235,7 @@ mod integration_tests {
 
         // Test putting object
         info!("Uploading test object: {}", object_name);
-        let put_result = service.put_object(object_name, test_data.clone(), Some("text/plain")).await;
+    let put_result = service.put_object(object_name, test_data.clone().to_vec(), Some("text/plain")).await;
         
         match put_result {
             Ok(_) => info!("Object uploaded successfully"),
@@ -669,7 +669,7 @@ mod integration_edge_cases {
         let object_name = "large-test-object.bin";
 
         info!("Uploading large object: {} bytes", large_data.len());
-        match service.put_object(object_name, large_data.clone(), Some("application/octet-stream")).await {
+    match service.put_object(object_name, large_data.clone().to_vec(), Some("application/octet-stream")).await {
             Ok(_) => {
                 info!("Large object uploaded successfully");
                 
@@ -735,7 +735,7 @@ mod integration_edge_cases {
         for object_name in special_names {
             info!("Testing object name: {}", object_name);
             
-            match service.put_object(object_name, test_data.clone(), Some("text/plain")).await {
+            match service.put_object(object_name, test_data.clone().to_vec(), Some("text/plain")).await {
                 Ok(_) => {
                     info!("Successfully uploaded object with special name: {}", object_name);
                     
@@ -781,7 +781,7 @@ mod integration_edge_cases {
             let object_name = format!("stress-test-{}.txt", i);
             let test_data = Bytes::from(format!("Test data for object {}", i));
             
-            match service.put_object(&object_name, test_data.clone(), Some("text/plain")).await {
+            match service.put_object(&object_name, test_data.clone().to_vec(), Some("text/plain")).await {
                 Ok(_) => {
                     successful_uploads += 1;
                     object_names.push((object_name.clone(), test_data));
